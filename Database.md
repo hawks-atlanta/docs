@@ -77,6 +77,7 @@ erDiagram
     	UUID   uuid    "PRIMARY KEY NOT NULL"
     	UINT   size    "NOT NULL"
     	STRING hashsum "UNIQUE NOT NULL"
+    	BOOL   ready   "DEFAULT FALSE NOT NULL"
     }
     
     locations {
@@ -107,8 +108,8 @@ VALUES (?, ?, ?, ?)
 #### Create file
 
 ```sql
-INSERT OR IGNORE INTO files (uuid, size, hashsum)
-VALUES (?, ?, ?)
+INSERT OR IGNORE INTO files (uuid, size, hashsum, ready)
+VALUES (?, ?, ?, FALSE)
 
 -- - Then create the location
 
@@ -145,6 +146,14 @@ WHERE
 	uuid           = ?
 	AND owner_uuid = ? 
 LIMIT 1
+```
+
+#### Make ready
+
+```sql
+UPDATE files
+SET ready = TRUE
+WHERE uuid = ?
 ```
 
 ## Worker
