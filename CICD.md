@@ -1,18 +1,35 @@
 # CI/CD
 
+```mermaid
+mindmap
+((Repository))
+	[Push]
+		[main]
+			Deploy Production
+			Release
+			Coverage
+		[dev]
+			Tagging
+			Deploy Development
+	[Pull Request]
+		[dev]
+			Run tests
+```
+
 ## Continuous integration
 
 ```mermaid
 mindmap
-(Repository)
-	[main]
-		Push
+((Repository))
+	[Push]
+		[main]
 			Release
-	[dev]
-		Pull Request
-			Test
-		Push
+			Coverage
+		[dev]
 			Tagging
+	[Pull request]
+		[dev]
+			Test
 ```
 
 ### Test
@@ -81,8 +98,15 @@ stateDiagram-v2
 		[*] --> VersionPy
 		VersionPy --> [*]
 	}
-	docker: Build Docker image
-	registry: Upload docker image
+	
+	state Build {
+		direction LR
+		docker: Build Docker image
+		registry: Upload docker image
+		[*] --> docker
+		docker --> registry
+		registry --> [*]
+	}
 	
 	state CreateRelease {
 		direction LR
@@ -91,44 +115,43 @@ stateDiagram-v2
 		createRelease --> [*]
 	}
 	
-	
-	
+	[*] --> Versioning
+	Versioning --> CreateRelease
+	CreateRelease --> Build
+	Build --> [*]
+```
+
+### Coverage
+
+```mermaid
+stateDiagram-v2
+	direction LR
 	state Coverage {
-		direction LR
-		EnvironmentUp: Environment Up
-		coverage: Coverage
-		Push: Push converage.txt
-		EnvironmentDown: Environment Down
-		[*] --> EnvironmentUp
-		EnvironmentUp --> coverage
-		coverage --> Push
-		Push --> EnvironmentDown
-		EnvironmentDown --> [*]
+        direction LR
+        EnvironmentUp: Environment Up
+        coverage: Coverage
+        Push: Push converage.txt
+        EnvironmentDown: Environment Down
+        [*] --> EnvironmentUp
+        EnvironmentUp --> coverage
+        coverage --> Push
+        Push --> EnvironmentDown
+        EnvironmentDown --> [*]
 	}
 	
-	state fork_main <<fork>>
-	state join_main <<join>>
-	
-	[*] --> fork_main
-	fork_main --> Versioning
-	fork_main --> Coverage
-	Versioning --> CreateRelease
-	CreateRelease --> docker
-	docker --> registry
-	registry --> join_main
-	Coverage --> join_main
-	join_main --> [*]
+	[*] --> Coverage
+	Coverage --> [*]
 ```
 
 ## Continuous deployment
 
 ```mermaid
 mindmap
-(Repository)
-	Push
-        dev
+((Repository))
+	[Push]
+        [dev]
         	Deploy Development
-        main
+        [main]
         	Deploy Production
 ```
 
