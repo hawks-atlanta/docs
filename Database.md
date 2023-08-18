@@ -76,20 +76,20 @@ erDiagram
 	files {
 		UUID    uuid                "PRIMARY KEY; NOT NULL"
 		UUID    owner_id            "INDEX; NOT NULL"
-			STRING  name                "INDEX; NOT NULL"
-			UINT    size                "NOT NULL"
+		STRING  name                "INDEX; NOT NULL"
+		UINT    size                "NOT NULL"
 		STRING  hashsum             "UNIQUE; NOT NULL"
-			UUID    main_location_id    "DEFAULT NULL; FOREIGN KEY directories.uuid"
-			UUID    replica_location_id "DEFAULT NULL; FOREIGN KEY directories.uuid"
+		UUID    main_location_id    "DEFAULT NULL; FOREIGN KEY directories.uuid"
+		UUID    replica_location_id "DEFAULT NULL; FOREIGN KEY directories.uuid"
 		BOOL    ready               "DEFAULT FALSE; NOT NULL"
 	}
 
 	directories {
-			UUID        uuid        "PRIMARY KEY; NOT NULL"
-			UUID        owner_id    "INDEX; NOT NULL"
-			STRING      volume      "NOT NULL"
-			UUID        parent_id   "INDEX; DEFAULT NULL; FOREIGN KEY directories.uuid"
-			STRING      name        "NOT NULL"
+		UUID        uuid        "PRIMARY KEY; NOT NULL"
+		UUID        owner_id    "INDEX; NOT NULL"
+		STRING      volume      "NOT NULL"
+		UUID        parent_id   "INDEX; DEFAULT NULL; FOREIGN KEY directories.uuid"
+		STRING      name        "NOT NULL"
 	}
 ```
 
