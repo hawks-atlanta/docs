@@ -81,25 +81,8 @@ stateDiagram-v2
 		[*] --> VersionPy
 		VersionPy --> [*]
 	}
-	BuildAndUpload: Build and Upload
-	state BuildAndUpload {
-		direction LR
-		state fork_build <<fork>>
-		state join_build <<join>>
-		upx: Run UPX
-		[*] --> fork_build
-		fork_build --> Windows
-		fork_build --> Linux
-		fork_build --> FreeBSD
-		fork_build --> OSX
-		Windows --> join_build
-		Linux --> join_build
-		FreeBSD --> join_build
-		OSX --> join_build
-		join_build --> upx
-		upx --> Upload
-		Upload --> [*]
-	}
+	docker: Build Docker image
+	registry: Upload docker image
 	
 	state CreateRelease {
 		direction LR
@@ -130,8 +113,9 @@ stateDiagram-v2
 	fork_main --> Versioning
 	fork_main --> Coverage
 	Versioning --> CreateRelease
-	CreateRelease --> BuildAndUpload
-	BuildAndUpload --> join_main
+	CreateRelease --> docker
+	docker --> registry
+	registry --> join_main
 	Coverage --> join_main
 	join_main --> [*]
 ```
