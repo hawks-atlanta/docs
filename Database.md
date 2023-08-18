@@ -117,97 +117,82 @@ erDiagram
 #### Create directory
 
 ```sql
-INSERT INTO directories (owner_id, volume, parent_id, name)
-VALUES (?, ?, ?, ?)
+INSERT OR IGNORE INTO files(owner_uuid, parent_uuid, name)
+VALUES(?, ?, ?)
 ```
 
 #### Create file
 
+First, create the `archive` metadata: 
+
 ```sql
-INSERT OR IGNORE INTO files(owner_id, name, size, hashsum)
+INSERT OR IGNORE INTO archives(hash_sum, size)
+VALUES(?, ?)
+```
+
+Then, create the `file` metadata:
+
+```sql
+INSERT OR IGNORE INTO files(owner_uuid, parent_uuid, archive_uuid, name)
 VALUES(?, ?, ?, ?)
 ```
 
-#### Make ready 
+Note that the `archives.ready` value is set to `FALSE` by default and the `files.volume` value is set to `NULL` by default because the file wasn't stored at this point.
 
-First, create a new location (directory) for the file (as needed). Note that this operation should be performed twice to create the main and replica locations.
+#### Nark as ready
+
+First, update the `archive` metadata:
 
 ```sql
-INSERT OR IGNORE INTO directories(owner_id, volume, parent_id, name)
-VALUES(?, ?, ?, ?)
+UPDATE archives
+SET
+	ready = TRUE
+WHERE
+	uuid = ?
 ```
 
-Then, update the file with the new locations and set it as ready.
+Then, update the `file` metadata:
 
 ```sql
 UPDATE files
 SET
-	main_location_id    = ?
-	replica_location_id = ?
-	ready               = TRUE
+	volume = ?
 WHERE
-	uuid                = ?
+	archive_uuid = ?
 ```
 
 #### Delete file
 
+First, delete the `archive` metadata. Note that, if the file is a directory, then the `archive_uuid` value is `NULL`, so the `DELETE` query should not delete anything:
+
+```sql
+DELETE FROM archives
+WHERE 
+	archives.uuid = (
+		SELECT archive_uuid
+		FROM files
+		WHERE
+			files.uuid = ?
+	)
+```
+
+Then, delete the `file` metadata:
+
 ```sql
 DELETE FROM files
 WHERE
-	owner_id	 = ?
-	AND uuid   = ?
-```
-
-#### Delete directory
-
-First, delete all files in the directory.
-
-```sql
-DELETE FROM files
-WHERE
-	owner_id	 							= ?
-	AND main_location_id    = ?
-```
-
-Then, delete all subdirectories.
-
-```sql
-DELETE FROM directories
-WHERE
-	owner_id	 = ?
-	AND parent_id = ?
-```
-
-Finally, delete the directory itself.
-
-```sql
-DELETE FROM directories
-WHERE
-	owner_id	 = ?
-	AND uuid   = ?
+	files.uuid = ?
 ```
 
 #### List directory
 
-List files: 
-
 ```sql
-SELECT uuid, name
+SELECT uuid, name, archive_uuid 
 FROM files
 WHERE
-	owner_id				= ?
-	AND main_location_id = ?
+	owner_uuid  = ?
+	AND parent_uuid = ?
 LIMIT ? OFFSET (? - 1)
-```
-
-List subdirectories:
-
-```sql
-SELECT uuid, name
-FROM directories
-WHERE
-	owner_id	 = ?
-	AND parent_id = ?
 ```
 
 #### Get file UUID
@@ -216,8 +201,8 @@ WHERE
 SELECT uuid
 FROM files
 WHERE
-	owner_id	 = ?
-	AND name   = ?
+	owner_uuid	 	= ?
+	AND name   		= ?
 ```
 
 ## Worker
