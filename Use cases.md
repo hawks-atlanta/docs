@@ -12,12 +12,12 @@ This document describes the functionalities of the entire application.
 
 ### Authorization
 
-<p style="text-align: center"><img src="assets/use-case-user-auth.svg" alt="use-case-user-auth" /></p>
-<p style="text-align: center"><img src="assets/use-case-gw-ch.svg" alt="use-case-gw-ch" /></p>
+<p style="text-align: center"><img src="assets/use-cases/authentication/user-actions.svg" alt="user-actions" /></p>
+<p style="text-align: center"><img src="assets/use-cases/authentication/gateway-challenge.svg" alt="gateway-challenge" /></p>
 
 ### Account
 
-<p style="text-align: center"><img src="assets/use-case-user-acc.svg" alt="use-case-user-acc" /></p>
+<p style="text-align: center"><img src="assets/use-cases/authentication/user-account.svg" alt="user-account" /></p>
 
 
 ## Metadata
@@ -31,11 +31,11 @@ This document describes the functionalities of the entire application.
 
 ### Files index
 
-<p style="text-align: center"><img src="assets/use-case-meta-user.svg" alt="use-case-meta-user" /></p>
+<p style="text-align: center"><img src="assets/use-cases/metadata/user-actions.svg" alt="user-actions" /></p>
 
 ### Worker uploads
 
-<p style="text-align: center"><img src="assets/use-case-worker-upload.svg" alt="use-case-worker-upload" /></p>
+<p style="text-align: center"><img src="assets/use-cases/metadata/worker-ready.svg" alt="worker-ready" /></p>
 
 
 ## Worker
@@ -48,7 +48,7 @@ This document describes the functionalities of the entire application.
 
 ### Filesystem
 
-<p style="text-align: center"><img src="assets/use-case-worker-fs.svg" alt="use-case-worker-fs" /></p>
+<p style="text-align: center"><img src="assets/use-cases/worker/user-filesystem.svg" alt="user-filesystem" /></p>
 
 
 ### Gateway
