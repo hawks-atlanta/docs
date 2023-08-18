@@ -73,20 +73,24 @@ WHERE
 
 ```mermaid
 erDiagram
-    files {
-    	UUID   uuid    "PRIMARY KEY NOT NULL"
-    	UINT   size    "NOT NULL"
-    	STRING hashsum "UNIQUE NOT NULL"
-    	BOOL   ready   "DEFAULT FALSE NOT NULL"
-    }
-    
-    locations {
-    	UUID   uuid         "PRIMARY KEY; NOT NULL"
-    	UUID   parent_uuid  "INDEX; DEFAULT NULL; FOREIGN KEY directories . uuid"
-    	UUID   owner_uuid   "INDEX; NOT NULL"
-    	STRING name         "INDEX; NOT NULL; UNIQUE unique_directory (parent_uuid, owner_uuid, name)"
-    	UUID   file_uuid    "FOREIGN KEY files . uuid"
-    }
+	files {
+		UUID    uuid                "PRIMARY KEY; NOT NULL"
+		UUID    owner_id            "INDEX; NOT NULL"
+			STRING  name                "INDEX; NOT NULL"
+			UINT    size                "NOT NULL"
+		STRING  hashsum             "UNIQUE; NOT NULL"
+			UUID    main_location_id    "DEFAULT NULL; FOREIGN KEY directories.uuid"
+			UUID    replica_location_id "DEFAULT NULL; FOREIGN KEY directories.uuid"
+		BOOL    ready               "DEFAULT FALSE; NOT NULL"
+	}
+
+	directories {
+			UUID        uuid        "PRIMARY KEY; NOT NULL"
+			UUID        owner_id    "INDEX; NOT NULL"
+			STRING      volume      "NOT NULL"
+			UUID        parent_id   "INDEX; DEFAULT NULL; FOREIGN KEY directories.uuid"
+			STRING      name        "NOT NULL"
+	}
 ```
 
 ### Relations
