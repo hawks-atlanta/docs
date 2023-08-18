@@ -73,23 +73,20 @@ WHERE
 
 ```mermaid
 erDiagram
-	files {
-		UUID    uuid                "PRIMARY KEY; NOT NULL"
-		UUID    owner_id            "INDEX; NOT NULL"
-		STRING  name                "INDEX; NOT NULL"
-		UINT    size                "NOT NULL"
-		STRING  hashsum             "UNIQUE; NOT NULL"
-		UUID    main_location_id    "DEFAULT NULL; FOREIGN KEY directories.uuid"
-		UUID    replica_location_id "DEFAULT NULL; FOREIGN KEY directories.uuid"
-		BOOL    ready               "DEFAULT FALSE; NOT NULL"
+	archives {
+		UUID    uuid        "PRIMARY KEY"
+		STRING  hash_sum    "NOT NULL"
+		UINT    size        "NOT NULL"
+		BOOLEAN ready       "DEFAULT FALSE"
 	}
 
-	directories {
-		UUID        uuid        "PRIMARY KEY; NOT NULL"
-		UUID        owner_id    "INDEX; NOT NULL"
-		STRING      volume      "NOT NULL"
-		UUID        parent_id   "INDEX; DEFAULT NULL; FOREIGN KEY directories.uuid"
-		STRING      name        "NOT NULL"
+	files {
+		UUID    uuid            "PRIMARY KEY"
+		UUID    owner_uuid      "INDEX; NOT NULL"
+		UUID    parent_uuid     "DEFAULT NULL; FOREIGN KEY files.uuid"
+		UUID    archive_uuid    "DEFAULT NULL; FOREIGN KEY archives.uuid"
+		STRING  volume          "DEFAULT NULL"
+		STRING  name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
 	}
 ```
 
@@ -97,7 +94,7 @@ erDiagram
 
 ```mermaid
 erDiagram
-	files     ||--o{ directories: "Has many"
+	files ||--o| archives: "Has zero or one"
 ```
 
 ### Queries
