@@ -90,12 +90,27 @@ erDiagram
 	}
 ```
 
-### Relations
+#### Tables description
+
+|   Name    | Description                                                  |
+| :-------: | :----------------------------------------------------------- |
+|  `files`  | This table contains metadata about the files and directories of the users. Note that, as in the UNIX file system, directories are also a type of file. |
+| `archive` | This table contains metadata about the archives (Actual files stored in the storage system). |
+
+#### Relations
 
 ```mermaid
 erDiagram
 	files ||--o| archives: "Has zero or one"
 ```
+
+#### Design notes
+
+- If the `files.parent_uuid` value is `NULL`, then the file is in the user's root directory.
+- If the `files.archive_uuid` value is `NULL`, then the file is a directory.
+- If the `files.volume` value is `NULL`, then the file wasn't stored yet. 
+- It's not necessary to store the `files.backup_volume` value because it can be inferred from the `files.volume` value, E.g. if the `files.volume` value is `volume_1`, then the `files.backup_volume` value is `volume_1_backup`.
+- The `files.name` value needs to have a 3-tuple unique constraint so that the same **user** can't have two files with the same **name** in the same **directory**.
 
 ### Queries
 
