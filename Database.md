@@ -175,8 +175,6 @@ WHERE
 	AND uuid   = ?
 ```
 
-**TODO:** Should we also delete all the existing replicas of the files in the directory?
-
 #### List directory
 
 List files: 
