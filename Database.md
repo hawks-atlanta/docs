@@ -97,7 +97,7 @@ erDiagram
 
 ```mermaid
 erDiagram
-	files     ||--o{ locations: "Has many"
+	files     ||--o{ directories: "Has many"
 ```
 
 ### Queries
