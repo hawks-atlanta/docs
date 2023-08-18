@@ -211,15 +211,15 @@ WHERE
 
 ```
 /
-├── files:[VOLUME_MOUNT_DATA]/
-│   ├── [FILE_UUID_X]
-│   └── [FILE_UUID_Y]
+├── files/
+│   ├── [VOLUME_MOUNT_DATA_1]/
+│   │   └── [FILE_UUID_X]
+│   └── [VOLUME_MOUNT_DATA_2]/
+│       └── [FILE_UUID_Y]
 └── backups/
     ├── [VOLUME_MOUNT_BACKUP_1]/
-    │   ├── [FILE_UUID_X]
-    │   └── [FILE_UUID_Y]
+    │   └── [FILE_UUID_X]
     └── [VOLUME_MOUNT_BACKUP_2]/
-        ├── [FILE_UUID_X]
         └── [FILE_UUID_Y]
 ```
 
