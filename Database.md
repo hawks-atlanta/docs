@@ -105,59 +105,109 @@ erDiagram
 #### Create directory
 
 ```sql
-INSERT INTO locations (uuid, parent_uuid, owner_uuid, name)
+INSERT INTO directories (owner_id, volume, parent_id, name)
 VALUES (?, ?, ?, ?)
 ```
 
 #### Create file
 
 ```sql
-INSERT OR IGNORE INTO files (uuid, size, hashsum, ready)
-VALUES (?, ?, ?, FALSE)
-
--- - Then create the location
-
-INSERT INTO locations (uuid, parent_uuid, owner_uuid, name, file_uuid)
-VALUES (?, ?, ?, ?, ?)
+INSERT OR IGNORE INTO files(owner_id, name, size, hashsum)
+VALUES(?, ?, ?, ?)
 ```
 
-#### Delete file / directory
+#### Make ready 
+
+First, create a new location (directory) for the file (as needed). Note that this operation should be performed twice to create the main and replica locations.
+
+```sql
+INSERT OR IGNORE INTO directories(owner_id, volume, parent_id, name)
+VALUES(?, ?, ?, ?)
+```
+
+Then, update the file with the new locations and set it as ready.
+
+```sql
+UPDATE files
+SET
+	main_location_id    = ?
+	replica_location_id = ?
+	ready               = TRUE
+WHERE
+	uuid                = ?
+```
+
+#### Delete file
 
 ```sql
 DELETE FROM files
 WHERE
-	owner_uuid = ?
+	owner_id	 = ?
 	AND uuid   = ?
 ```
 
-#### List directory
+#### Delete directory
+
+First, delete all files in the directory.
 
 ```sql
-SELECT uuid, name, file_uuid
-FROM locations
+DELETE FROM files
 WHERE
-	owner_uuid      = ?
-	AND parent_uuid = ?
+	owner_id	 							= ?
+	AND main_location_id    = ?
+```
+
+Then, delete all subdirectories.
+
+```sql
+DELETE FROM directories
+WHERE
+	owner_id	 = ?
+	AND parent_id = ?
+```
+
+Finally, delete the directory itself.
+
+```sql
+DELETE FROM directories
+WHERE
+	owner_id	 = ?
+	AND uuid   = ?
+```
+
+**TODO:** Should we also delete all the existing replicas of the files in the directory?
+
+#### List directory
+
+List files: 
+
+```sql
+SELECT uuid, name
+FROM files
+WHERE
+	owner_id				= ?
+	AND main_location_id = ?
 LIMIT ? OFFSET (? - 1)
+```
+
+List subdirectories:
+
+```sql
+SELECT uuid, name
+FROM directories
+WHERE
+	owner_id	 = ?
+	AND parent_id = ?
 ```
 
 #### Get file UUID
 
 ```sql
 SELECT uuid
-FROM locations
+FROM files
 WHERE
-	uuid           = ?
-	AND owner_uuid = ? 
-LIMIT 1
-```
-
-#### Make ready
-
-```sql
-UPDATE files
-SET ready = TRUE
-WHERE uuid = ?
+	owner_id	 = ?
+	AND name   = ?
 ```
 
 ## Worker
