@@ -212,15 +212,23 @@ WHERE
 ```
 /
 ├── files/
-│   ├── [VOLUME_MOUNT_DATA_1]/
-│   │   └── [FILE_UUID_X]
-│   └── [VOLUME_MOUNT_DATA_2]/
-│       └── [FILE_UUID_Y]
+│   ├── VOLUME_MOUNT_DATA_1/
+│   │   ├── OWNER_UUID_A/
+│   │   │   └── FILE_UUID_X
+│   │   └── OWNER_UUID_B/
+│   │       └── FILE_UUID_Y
+│   └── VOLUME_MOUNT_DATA_2/
+│       └── OWNER_UUID_A/
+│           └── FILE_UUID_Z
 └── backups/
-    ├── [VOLUME_MOUNT_BACKUP_1]/
-    │   └── [FILE_UUID_X]
-    └── [VOLUME_MOUNT_BACKUP_2]/
-        └── [FILE_UUID_Y]
+    ├── VOLUME_MOUNT_BACKUP_1/
+    │   ├── OWNER_UUID_A/
+    │   │   └── FILE_UUID_X
+    │   └── OWNER_UUID_B/
+    │       └── FILE_UUID_Y
+    └── VOLUME_MOUNT_DATA_2/
+        └── OWNER_UUID_A/
+            └── FILE_UUID_Z
 ```
 
 |   Path    |                         Description                          |
