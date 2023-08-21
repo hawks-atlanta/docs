@@ -89,6 +89,11 @@ For PR names follow the same instructions of the [Commits](#Commits) section.
 - PR should always be created with existing Opened issues.
 - PR description should point all the changes made by the devs.
 
+PR will be always merged using `squash`.
+
+- Make sure the description of the `Merge` contains all the commits made.
+- Remove any `[ci skip]` from the `Merge` description.
+
 ## REST APIs
 
 While developing REST API make sure you always create a `docs/spec.openapi.yaml` document in the repository assigned. Follow this link for more documentation about the [spec](https://swagger.io/specification/).
