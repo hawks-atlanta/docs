@@ -73,66 +73,124 @@ WHERE
 
 ```mermaid
 erDiagram
-    files {
-    	UUID   uuid    "PRIMARY KEY NOT NULL"
-    	UINT   size    "NOT NULL"
-    	STRING hashsum "UNIQUE NOT NULL"
-    	BOOL   ready   "DEFAULT FALSE NOT NULL"
-    }
-    
-    locations {
-    	UUID   uuid         "PRIMARY KEY; NOT NULL"
-    	UUID   parent_uuid  "INDEX; DEFAULT NULL; FOREIGN KEY directories . uuid"
-    	UUID   owner_uuid   "INDEX; NOT NULL"
-    	STRING name         "INDEX; NOT NULL; UNIQUE unique_directory (parent_uuid, owner_uuid, name)"
-    	UUID   file_uuid    "FOREIGN KEY files . uuid"
-    }
+	archives {
+		UUID    uuid        "PRIMARY KEY"
+		STRING  hash_sum    "NOT NULL"
+		UINT    size        "NOT NULL"
+		BOOLEAN ready       "DEFAULT FALSE"
+	}
+
+	files {
+		UUID    uuid            "PRIMARY KEY"
+		UUID    owner_uuid      "INDEX; NOT NULL"
+		UUID    parent_uuid     "DEFAULT NULL; FOREIGN KEY files.uuid"
+		UUID    archive_uuid    "DEFAULT NULL; FOREIGN KEY archives.uuid"
+		STRING  volume          "DEFAULT NULL"
+		STRING  name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
+	}
 ```
 
-### Relations
+#### Tables description
+
+|   Name    | Description                                                  |
+| :-------: | :----------------------------------------------------------- |
+|  `files`  | This table contains metadata about the files and directories of the users. Note that, as in the UNIX file system, directories are also a type of file. |
+| `archive` | This table contains metadata about the archives (Actual files stored in the storage system). |
+
+#### Relations
 
 ```mermaid
 erDiagram
-	files     ||--o{ locations: "Has many"
+	files ||--o| archives: "Has zero or one"
 ```
+
+#### Design notes
+
+- If the `files.parent_uuid` value is `NULL`, then the file is in the user's root directory.
+- If the `files.archive_uuid` value is `NULL`, then the file is a directory.
+- If the `files.volume` value is `NULL`, then the file wasn't stored yet. 
+- It's not necessary to store the `files.backup_volume` value because it can be inferred from the `files.volume` value, E.g. if the `files.volume` value is `volume_1`, then the `files.backup_volume` value is `volume_1_backup`.
+- The `files.name` value needs to have a 3-tuple unique constraint so that the same **user** can't have two files with the same **name** in the same **directory**.
 
 ### Queries
 
 #### Create directory
 
 ```sql
-INSERT INTO locations (uuid, parent_uuid, owner_uuid, name)
-VALUES (?, ?, ?, ?)
+INSERT OR IGNORE INTO files(owner_uuid, parent_uuid, name)
+VALUES(?, ?, ?)
 ```
 
 #### Create file
 
+First, create the `archive` metadata: 
+
 ```sql
-INSERT OR IGNORE INTO files (uuid, size, hashsum, ready)
-VALUES (?, ?, ?, FALSE)
-
--- - Then create the location
-
-INSERT INTO locations (uuid, parent_uuid, owner_uuid, name, file_uuid)
-VALUES (?, ?, ?, ?, ?)
+INSERT OR IGNORE INTO archives(hash_sum, size)
+VALUES(?, ?)
 ```
 
-#### Delete file / directory
+Then, create the `file` metadata:
+
+```sql
+INSERT OR IGNORE INTO files(owner_uuid, parent_uuid, archive_uuid, name)
+VALUES(?, ?, ?, ?)
+```
+
+Note that the `archives.ready` value is set to `FALSE` by default and the `files.volume` value is set to `NULL` by default because the file wasn't stored at this point.
+
+#### Nark as ready
+
+First, update the `archive` metadata:
+
+```sql
+UPDATE archives
+SET
+	ready = TRUE
+WHERE
+	uuid = ?
+```
+
+Then, update the `file` metadata:
+
+```sql
+UPDATE files
+SET
+	volume = ?
+WHERE
+	archive_uuid = ?
+```
+
+#### Delete file
+
+First, delete the `archive` metadata. Note that, if the file is a directory, then the `archive_uuid` value is `NULL`, so the `DELETE` query should not delete anything:
+
+```sql
+DELETE FROM archives
+WHERE 
+	archives.uuid = (
+		SELECT archive_uuid
+		FROM files
+		WHERE
+			files.uuid = ?
+	)
+```
+
+Then, delete the `file` metadata:
 
 ```sql
 DELETE FROM files
 WHERE
-	owner_uuid = ?
-	AND uuid   = ?
+	files.uuid = ?
 ```
 
 #### List directory
 
 ```sql
-SELECT uuid, name, file_uuid
-FROM locations
+SELECT uuid, name, archive_uuid 
+FROM files
 WHERE
-	owner_uuid      = ?
+	owner_uuid  = ?
 	AND parent_uuid = ?
 LIMIT ? OFFSET (? - 1)
 ```
@@ -141,19 +199,10 @@ LIMIT ? OFFSET (? - 1)
 
 ```sql
 SELECT uuid
-FROM locations
+FROM files
 WHERE
-	uuid           = ?
-	AND owner_uuid = ? 
-LIMIT 1
-```
-
-#### Make ready
-
-```sql
-UPDATE files
-SET ready = TRUE
-WHERE uuid = ?
+	owner_uuid	 	= ?
+	AND name   		= ?
 ```
 
 ## Worker
@@ -162,15 +211,15 @@ WHERE uuid = ?
 
 ```
 /
-├── files:[VOLUME_MOUNT_DATA]/
-│   ├── [FILE_UUID_X]
-│   └── [FILE_UUID_Y]
+├── files/
+│   ├── [VOLUME_MOUNT_DATA_1]/
+│   │   └── [FILE_UUID_X]
+│   └── [VOLUME_MOUNT_DATA_2]/
+│       └── [FILE_UUID_Y]
 └── backups/
     ├── [VOLUME_MOUNT_BACKUP_1]/
-    │   ├── [FILE_UUID_X]
-    │   └── [FILE_UUID_Y]
+    │   └── [FILE_UUID_X]
     └── [VOLUME_MOUNT_BACKUP_2]/
-        ├── [FILE_UUID_X]
         └── [FILE_UUID_Y]
 ```
 
