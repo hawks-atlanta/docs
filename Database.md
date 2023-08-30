@@ -87,21 +87,31 @@ erDiagram
 		UUID    archive_uuid    "DEFAULT NULL; FOREIGN KEY archives.uuid"
 		STRING  volume          "DEFAULT NULL"
 		STRING  name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
+		INT     size            ""
+		BOOL    is_shared       "DEFAULT FALSE"
+	}
+	
+	shared_files {
+		UUID uuid      "PRIMARY KEY"
+		UUID file_uuid "NOT NULL; FOREIGN KEY files.uuid"
+		UUID user_uuid "INDEX; NOT NULL; UNIQUE (file_uuid, user_uuid)"
 	}
 ```
 
 #### Tables description
 
-|   Name    | Description                                                  |
-| :-------: | :----------------------------------------------------------- |
-|  `files`  | This table contains metadata about the files and directories of the users. Note that, as in the UNIX file system, directories are also a type of file. |
-| `archive` | This table contains metadata about the archives (Actual files stored in the storage system). |
+|      Name      | Description                                                  |
+| :------------: | :----------------------------------------------------------- |
+|    `files`     | This table contains metadata about the files and directories of the users. Note that, as in the UNIX file system, directories are also a type of file. **Make sure to include an `ON DELETE CASCADE` |
+|   `archive`    | This table contains metadata about the archives (Actual files stored in the storage system). |
+| `shared_files` | This table is used as main point for checking if a file has being shared with an specific account. |
 
 #### Relations
 
 ```mermaid
 erDiagram
-	files ||--o| archives: "Has zero or one"
+	files ||--o| archives:     "Has zero or one"
+	files ||--o{ shared_files: "Has zero or many"
 ```
 
 #### Design notes
@@ -139,7 +149,7 @@ VALUES(?, ?, ?, ?)
 
 Note that the `archives.ready` value is set to `FALSE` by default and the `files.volume` value is set to `NULL` by default because the file wasn't stored at this point.
 
-#### Nark as ready
+#### Mark as ready
 
 First, update the `archive` metadata:
 
@@ -187,7 +197,7 @@ WHERE
 #### List directory
 
 ```sql
-SELECT uuid, name, archive_uuid 
+SELECT uuid, name, archive_uuid, size, is_shared 
 FROM files
 WHERE
 	owner_uuid  = ?
@@ -203,6 +213,76 @@ FROM files
 WHERE
 	owner_uuid	 	= ?
 	AND name   		= ?
+```
+
+### Share/Unshare a file
+
+```sql
+-- - This query should receive owner_uuid, other_user_uuid, file_to_share_uuid
+-- - First check if session user is owner of the file
+SELECT uuid
+FROM files
+WHERE
+	owner_uuid = ?
+LIMIT 1
+
+-- - SHARE
+-- - Then insert the file if we are the owners
+INSERT INTO shared_files (uuid, file_uuid, user_uuid)
+VALUES (?, ?, ?)
+
+-- - UNSHARE
+-- - Then insert the file if we are the owners
+DELETE FROM shared_files
+WHERE (
+    file_uuid = ?
+    AND user_uuid = ?
+)
+```
+
+### Can I read
+
+```sql
+-- - Query used to verify if current account can read file
+-- - If result is not zero, we can delete
+SELECT COUNT(*)
+FROM (
+    SELECT files.uuid
+    FROM files
+    WHERE
+    	files.uuid = ?
+    	AND files.owner_uuid = ?
+    LIMIT 1
+    UNION SELECT shared_files
+    WHERE
+    	shared_files.file_uuid = ?
+    	AND shared_files.user_uuid = ?
+)
+```
+
+### Files shared with me
+
+```sql
+-- - This query receives the UUID of the current session
+SELECT (files.uuid, files.name, files.owner_uuid, file.ssize)
+FROM files, shared_files
+WHERE
+	shared_files.user_uuid = ?
+	AND files.uuid = ?
+	AND files.UUID = shared_files.file_uuid
+```
+
+### File shared with who
+
+```sql
+-- - Query used by file owner to list other users that have access to file
+-- - Receives the owner_uuid and the file_uuid
+SELECT (shared_files.user_uuid)
+FROM files, shared_files
+WHERE
+	files.uuid = ?
+	AND owner_uuid = ?
+	AND files.uuid = shared_files.uuid
 ```
 
 ## Worker
