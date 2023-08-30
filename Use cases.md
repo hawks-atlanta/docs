@@ -19,6 +19,10 @@ This document describes the functionalities of the entire application.
 
 <p style="text-align: center"><img src="assets/use-cases/authentication/user-account.svg" alt="user-account" /></p>
 
+### User identification
+
+<p style="text-align: center"><img src="assets/use-cases/metadata/gw-user-id-actions.svg" alt="worker-ready" /></p>
+
 
 ## Metadata
 
