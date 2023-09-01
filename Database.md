@@ -241,29 +241,61 @@ WHERE (
 
 ### Can I read
 
-```sql
--- - Query used to verify if current account can read file
--- - If result is not zero, we can delete
-SELECT COUNT(*)
-FROM (
-    SELECT files.uuid
-    FROM files
-    WHERE
-    	files.uuid = ?
-    	AND files.owner_uuid = ?
-    LIMIT 1
-    UNION SELECT shared_files
-    WHERE
-    	shared_files.file_uuid = ?
-    	AND shared_files.user_uuid = ?
-)
+```pgsql
+CREATE OR REPLACE FUNCTION can_read(file_uuid UUID, user_uuid UUID)
+	RETURNS BOOLEAN 
+	LANGUAGE PLPGSQL
+	AS $$
+DECLARE
+	parent_uuid UUID;
+	is_owner BOOLEAN;
+	is_shared BOOLEAN;
+BEGIN
+	-- Check if the user is the owner of the file
+	SELECT COUNT(uuid) > 0
+	INTO is_owner
+	FROM files
+	WHERE
+		files.uuid = file_uuid
+		AND files.owner_uuid = user_uuid;
+	
+	IF is_owner THEN
+		RETURN TRUE;
+	END IF;
+
+	-- Check if the file was directly shared with the user
+	SELECT COUNT(uuid) > 0
+	INTO is_shared
+	FROM shared_files
+	WHERE
+		shared_files.file_uuid = file_uuid
+		AND shared_files.user_uuid = user_uuid; 
+
+	IF is_shared THEN
+		RETURN TRUE;
+	END IF;
+
+	-- Check if the file is contained in a directory shared with the user
+	SELECT files.parent_uuid
+	INTO parent_uuid
+	FROM files
+	WHERE
+		files.uuid = file_uuid; 
+	
+	IF parent_uuid IS NULL THEN
+		RETURN FALSE;
+	ELSE
+		RETURN can_read(parent_uuid, user_uuid);
+	END IF;
+END $$
+; 
 ```
 
 ### Files shared with me
 
 ```sql
 -- - This query receives the UUID of the current session
-SELECT (files.uuid, files.name, files.owner_uuid, file.ssize)
+SELECT (files.uuid, files.name, files.owner_uuid, file.size)
 FROM files, shared_files
 WHERE
 	shared_files.user_uuid = ?
