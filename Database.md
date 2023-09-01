@@ -88,7 +88,6 @@ erDiagram
 		STRING  volume          "DEFAULT NULL"
 		STRING  name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
 		INT     size            ""
-		BOOL    is_shared       "DEFAULT FALSE"
 	}
 	
 	shared_files {
