@@ -87,7 +87,6 @@ erDiagram
 		UUID    archive_uuid    "DEFAULT NULL; FOREIGN KEY archives.uuid"
 		STRING  volume          "DEFAULT NULL"
 		STRING  name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
-		INT     size            ""
 	}
 	
 	shared_files {
