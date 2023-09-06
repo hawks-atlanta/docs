@@ -195,7 +195,7 @@ WHERE
 #### List directory
 
 ```sql
-SELECT uuid, name, archive_uuid, size, is_shared 
+SELECT uuid, name, archive_uuid, size 
 FROM files
 WHERE
 	owner_uuid  = ?
