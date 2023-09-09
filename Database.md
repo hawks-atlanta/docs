@@ -81,13 +81,13 @@ erDiagram
 	}
 
 	files {
-		UUID    uuid            "PRIMARY KEY"
-		UUID    owner_uuid      "INDEX; NOT NULL"
-		UUID    parent_uuid     "DEFAULT NULL; FOREIGN KEY files.uuid"
-		UUID    archive_uuid    "DEFAULT NULL; FOREIGN KEY archives.uuid"
-		STRING  volume          "DEFAULT NULL"
-		STRING  name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
-		INT     size            ""
+		UUID    	uuid            "PRIMARY KEY"
+		UUID    	owner_uuid      "INDEX; NOT NULL"
+		UUID    	parent_uuid     "DEFAULT NULL; FOREIGN KEY files.uuid"
+		UUID    	archive_uuid    "DEFAULT NULL; FOREIGN KEY archives.uuid"
+		STRING  	volume          "DEFAULT NULL"
+		STRING  	name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
+		BOOLEAN 	is_shared 		 	"DEFAULT FALSE"
 	}
 	
 	shared_files {
@@ -196,7 +196,7 @@ WHERE
 #### List directory
 
 ```sql
-SELECT uuid, name, archive_uuid, size, is_shared 
+SELECT uuid, name, archive_uuid, size, is_shared
 FROM files
 WHERE
 	owner_uuid  = ?
