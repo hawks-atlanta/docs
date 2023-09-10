@@ -81,27 +81,36 @@ erDiagram
 	}
 
 	files {
-		UUID    uuid            "PRIMARY KEY"
-		UUID    owner_uuid      "INDEX; NOT NULL"
-		UUID    parent_uuid     "DEFAULT NULL; FOREIGN KEY files.uuid"
-		UUID    archive_uuid    "DEFAULT NULL; FOREIGN KEY archives.uuid"
-		STRING  volume          "DEFAULT NULL"
-		STRING  name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
+		UUID    	uuid            "PRIMARY KEY"
+		UUID    	owner_uuid      "INDEX; NOT NULL"
+		UUID    	parent_uuid     "DEFAULT NULL; FOREIGN KEY files.uuid"
+		UUID    	archive_uuid    "DEFAULT NULL; FOREIGN KEY archives.uuid"
+		STRING  	volume          "DEFAULT NULL"
+		STRING  	name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
+		BOOLEAN 	is_shared 		 	"DEFAULT FALSE"
+	}
+	
+	shared_files {
+		UUID uuid      "PRIMARY KEY"
+		UUID file_uuid "NOT NULL; FOREIGN KEY files.uuid"
+		UUID user_uuid "INDEX; NOT NULL; UNIQUE (file_uuid, user_uuid)"
 	}
 ```
 
 #### Tables description
 
-|   Name    | Description                                                  |
-| :-------: | :----------------------------------------------------------- |
-|  `files`  | This table contains metadata about the files and directories of the users. Note that, as in the UNIX file system, directories are also a type of file. |
-| `archive` | This table contains metadata about the archives (Actual files stored in the storage system). |
+|      Name      | Description                                                  |
+| :------------: | :----------------------------------------------------------- |
+|    `files`     | This table contains metadata about the files and directories of the users. Note that, as in the UNIX file system, directories are also a type of file. **Make sure to include an `ON DELETE CASCADE` |
+|   `archive`    | This table contains metadata about the archives (Actual files stored in the storage system). |
+| `shared_files` | This table is used as main point for checking if a file has being shared with an specific account. |
 
 #### Relations
 
 ```mermaid
 erDiagram
-	files ||--o| archives: "Has zero or one"
+	files ||--o| archives:     "Has zero or one"
+	files ||--o{ shared_files: "Has zero or many"
 ```
 
 #### Design notes
@@ -139,7 +148,7 @@ VALUES(?, ?, ?, ?)
 
 Note that the `archives.ready` value is set to `FALSE` by default and the `files.volume` value is set to `NULL` by default because the file wasn't stored at this point.
 
-#### Nark as ready
+#### Mark as ready
 
 First, update the `archive` metadata:
 
@@ -187,7 +196,7 @@ WHERE
 #### List directory
 
 ```sql
-SELECT uuid, name, archive_uuid 
+SELECT uuid, name, archive_uuid, size, is_shared
 FROM files
 WHERE
 	owner_uuid  = ?
@@ -203,6 +212,108 @@ FROM files
 WHERE
 	owner_uuid	 	= ?
 	AND name   		= ?
+```
+
+### Share/Unshare a file
+
+```sql
+-- - This query should receive owner_uuid, other_user_uuid, file_to_share_uuid
+-- - First check if session user is owner of the file
+SELECT uuid
+FROM files
+WHERE
+	owner_uuid = ?
+LIMIT 1
+
+-- - SHARE
+-- - Then insert the file if we are the owners
+INSERT INTO shared_files (uuid, file_uuid, user_uuid)
+VALUES (?, ?, ?)
+
+-- - UNSHARE
+-- - Then insert the file if we are the owners
+DELETE FROM shared_files
+WHERE (
+    file_uuid = ?
+    AND user_uuid = ?
+)
+```
+
+### Can I read
+
+```pgsql
+CREATE OR REPLACE FUNCTION can_read(file_uuid UUID, user_uuid UUID)
+	RETURNS BOOLEAN 
+	LANGUAGE PLPGSQL
+	AS $$
+DECLARE
+	parent_uuid UUID;
+	is_owner BOOLEAN;
+	is_shared BOOLEAN;
+BEGIN
+	-- Check if the user is the owner of the file
+	SELECT COUNT(uuid) > 0
+	INTO is_owner
+	FROM files
+	WHERE
+		files.uuid = file_uuid
+		AND files.owner_uuid = user_uuid;
+	
+	IF is_owner THEN
+		RETURN TRUE;
+	END IF;
+
+	-- Check if the file was directly shared with the user
+	SELECT COUNT(uuid) > 0
+	INTO is_shared
+	FROM shared_files
+	WHERE
+		shared_files.file_uuid = file_uuid
+		AND shared_files.user_uuid = user_uuid; 
+
+	IF is_shared THEN
+		RETURN TRUE;
+	END IF;
+
+	-- Check if the file is contained in a directory shared with the user
+	SELECT files.parent_uuid
+	INTO parent_uuid
+	FROM files
+	WHERE
+		files.uuid = file_uuid; 
+	
+	IF parent_uuid IS NULL THEN
+		RETURN FALSE;
+	ELSE
+		RETURN can_read(parent_uuid, user_uuid);
+	END IF;
+END $$
+; 
+```
+
+### Files shared with me
+
+```sql
+-- - This query receives the UUID of the current session
+SELECT (files.uuid, files.name, files.owner_uuid, file.size)
+FROM files, shared_files
+WHERE
+	shared_files.user_uuid = ?
+	AND files.uuid = ?
+	AND files.UUID = shared_files.file_uuid
+```
+
+### File shared with who
+
+```sql
+-- - Query used by file owner to list other users that have access to file
+-- - Receives the owner_uuid and the file_uuid
+SELECT (shared_files.user_uuid)
+FROM files, shared_files
+WHERE
+	files.uuid = ?
+	AND owner_uuid = ?
+	AND files.uuid = shared_files.uuid
 ```
 
 ## Worker

@@ -19,6 +19,10 @@ This document describes the functionalities of the entire application.
 
 <p style="text-align: center"><img src="assets/use-cases/authentication/user-account.svg" alt="user-account" /></p>
 
+### User identification
+
+<p style="text-align: center"><img src="assets/use-cases/metadata/gw-user-id-actions.svg" alt="worker-ready" /></p>
+
 
 ## Metadata
 
@@ -37,6 +41,17 @@ This document describes the functionalities of the entire application.
 
 <p style="text-align: center"><img src="assets/use-cases/metadata/worker-ready.svg" alt="worker-ready" /></p>
 
+### User share actions
+
+<p style="text-align: center"><img src="assets/use-cases/metadata/user-share-actions.svg" alt="worker-ready" /></p>
+
+### User share list actions
+
+<p style="text-align: center"><img src="assets/use-cases/metadata/user-share-list-actions.svg" alt="worker-ready" /></p>
+
+### Gateway share actions
+
+<p style="text-align: center"><img src="assets/use-cases/metadata/gw-share-actions.svg" alt="worker-ready" /></p>
 
 ## Worker
 
