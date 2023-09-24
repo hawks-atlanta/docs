@@ -15,7 +15,7 @@ erDiagram
 		STRING    username      "UNIQUE NOT NULL"
 		STRING    password_hash "NOT NULL"
 	}
-	
+
 	logins  {
 		UUID      uuid       "PRIMARY KEY NOT NULL"
 		TIMESTAMP event_at   "NOT NULL"
@@ -36,7 +36,7 @@ erDiagram
 #### Create user
 
 ```sql
-INSERT INTO users (uuid, username, password_hash) 
+INSERT INTO users (uuid, username, password_hash)
 VALUES (?, ?, ?)
 ```
 
@@ -45,7 +45,7 @@ VALUES (?, ?, ?)
 ```sql
 SELECT uuid
 FROM users
-WHERE 
+WHERE
 	Username     = ?
 	AND password = ?
 LIMIT 1
@@ -75,6 +75,7 @@ WHERE
 erDiagram
 	archives {
 		UUID    uuid        "PRIMARY KEY"
+		STRING 	extension	 	"NOT NULL"
 		STRING  hash_sum    "NOT NULL"
 		UINT    size        "NOT NULL"
 		BOOLEAN ready       "DEFAULT FALSE"
@@ -89,7 +90,7 @@ erDiagram
 		STRING  	name            "INDEX; NOT NULL; UNIQUE (owner_id, parent_id, name)"
 		BOOLEAN 	is_shared 		 	"DEFAULT FALSE"
 	}
-	
+
 	shared_files {
 		UUID uuid      "PRIMARY KEY"
 		UUID file_uuid "NOT NULL; FOREIGN KEY files.uuid"
@@ -99,11 +100,11 @@ erDiagram
 
 #### Tables description
 
-|      Name      | Description                                                  |
-| :------------: | :----------------------------------------------------------- |
-|    `files`     | This table contains metadata about the files and directories of the users. Note that, as in the UNIX file system, directories are also a type of file. **Make sure to include an `ON DELETE CASCADE` |
-|   `archive`    | This table contains metadata about the archives (Actual files stored in the storage system). |
-| `shared_files` | This table is used as main point for checking if a file has being shared with an specific account. |
+|      Name      | Description                                                                                                                                                                                            |
+| :------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|    `files`     | This table contains metadata about the files and directories of the users. Note that, as in the UNIX file system, directories are also a type of file. \*\*Make sure to include an `ON DELETE CASCADE` |
+|   `archive`    | This table contains metadata about the archives (Actual files stored in the storage system).                                                                                                           |
+| `shared_files` | This table is used as main point for checking if a file has being shared with an specific account.                                                                                                     |
 
 #### Relations
 
@@ -117,7 +118,7 @@ erDiagram
 
 - If the `files.parent_uuid` value is `NULL`, then the file is in the user's root directory.
 - If the `files.archive_uuid` value is `NULL`, then the file is a directory.
-- If the `files.volume` value is `NULL`, then the file wasn't stored yet. 
+- If the `files.volume` value is `NULL`, then the file wasn't stored yet.
 - It's not necessary to store the `files.backup_volume` value because it can be inferred from the `files.volume` value, E.g. if the `files.volume` value is `volume_1`, then the `files.backup_volume` value is `volume_1_backup`.
 - The `files.name` value needs to have a 3-tuple unique constraint so that the same **user** can't have two files with the same **name** in the same **directory**.
 
@@ -132,7 +133,7 @@ VALUES(?, ?, ?)
 
 #### Create file
 
-First, create the `archive` metadata: 
+First, create the `archive` metadata:
 
 ```sql
 INSERT OR IGNORE INTO archives(hash_sum, size)
@@ -176,7 +177,7 @@ First, delete the `archive` metadata. Note that, if the file is a directory, the
 
 ```sql
 DELETE FROM archives
-WHERE 
+WHERE
 	archives.uuid = (
 		SELECT archive_uuid
 		FROM files
@@ -243,7 +244,7 @@ WHERE (
 
 ```pgsql
 CREATE OR REPLACE FUNCTION can_read(file_uuid UUID, user_uuid UUID)
-	RETURNS BOOLEAN 
+	RETURNS BOOLEAN
 	LANGUAGE PLPGSQL
 	AS $$
 DECLARE
@@ -258,7 +259,7 @@ BEGIN
 	WHERE
 		files.uuid = file_uuid
 		AND files.owner_uuid = user_uuid;
-	
+
 	IF is_owner THEN
 		RETURN TRUE;
 	END IF;
@@ -269,7 +270,7 @@ BEGIN
 	FROM shared_files
 	WHERE
 		shared_files.file_uuid = file_uuid
-		AND shared_files.user_uuid = user_uuid; 
+		AND shared_files.user_uuid = user_uuid;
 
 	IF is_shared THEN
 		RETURN TRUE;
@@ -280,15 +281,15 @@ BEGIN
 	INTO parent_uuid
 	FROM files
 	WHERE
-		files.uuid = file_uuid; 
-	
+		files.uuid = file_uuid;
+
 	IF parent_uuid IS NULL THEN
 		RETURN FALSE;
 	ELSE
 		RETURN can_read(parent_uuid, user_uuid);
 	END IF;
 END $$
-; 
+;
 ```
 
 ### Files shared with me
@@ -334,7 +335,7 @@ WHERE
         └── [FILE_UUID_Y]
 ```
 
-|   Path    |                         Description                          |
-| :-------: | :----------------------------------------------------------: |
+|   Path    |                                  Description                                   |
+| :-------: | :----------------------------------------------------------------------------: |
 |  `files`  | This directory is a volume mounted on the pod. Used as main file storage point |
-| `backups` | In this directory are mounted other volumes used as backup points |
+| `backups` |       In this directory are mounted other volumes used as backup points        |
