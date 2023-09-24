@@ -1,4 +1,4 @@
-# Use cases
+user-# Use cases
 
 This document describes the functionalities of the entire application.
 
@@ -36,6 +36,10 @@ This document describes the functionalities of the entire application.
 ### Files index
 
 <p style="text-align: center"><img src="assets/use-cases/metadata/user-actions.svg" alt="user-actions" /></p>
+
+### Info
+
+<p style="text-align: center"><img src="assets/use-cases/metadata/user-info.svg" alt="user-info" /></p>
 
 ### Worker uploads
 
