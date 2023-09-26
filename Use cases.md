@@ -1,4 +1,4 @@
-user-# Use cases
+# Use cases
 
 This document describes the functionalities of the entire application.
 
