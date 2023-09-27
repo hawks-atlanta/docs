@@ -4,10 +4,10 @@ This document describes the functionalities of the entire application.
 
 ## Authentication
 
-|  Documentation  |                             URL                              |
-| :-------------: | :----------------------------------------------------------: |
-|   Repository    | [authentication-go](https://github.com/hawks-atlanta/authentication-go) |
-| Database Models |             [Models](Database.md#Authentication)             |
+|  Documentation  |                                            URL                                             |
+| :-------------: | :----------------------------------------------------------------------------------------: |
+|   Repository    |          [authentication-go](https://github.com/hawks-atlanta/authentication-go)           |
+| Database Models |                            [Models](Database.md#Authentication)                            |
 |     OpenAPI     | [Specification](https://github.com/hawks-atlanta/authentication-go/docs/spec.openapi.yaml) |
 
 ### Authorization
@@ -23,19 +23,22 @@ This document describes the functionalities of the entire application.
 
 <p style="text-align: center"><img src="assets/use-cases/metadata/gw-user-id-actions.svg" alt="worker-ready" /></p>
 
-
 ## Metadata
 
-|  Documentation  |                             URL                              |
-| :-------------: | :----------------------------------------------------------: |
-|   Repository    | [metadata-scala](https://github.com/hawks-atlanta/metadata-scala) |
-| Database Models |                [Models](Database.md#Metadata)                |
-|      Logic      |                   [docs](docs/Metadata.md)                   |
+|  Documentation  |                                           URL                                           |
+| :-------------: | :-------------------------------------------------------------------------------------: |
+|   Repository    |            [metadata-scala](https://github.com/hawks-atlanta/metadata-scala)            |
+| Database Models |                             [Models](Database.md#Metadata)                              |
+|      Logic      |                                [docs](docs/Metadata.md)                                 |
 |     OpenAPI     | [Specification](https://github.com/hawks-atlanta/metadata-scala/docs/spec.openapi.yaml) |
 
 ### Files index
 
 <p style="text-align: center"><img src="assets/use-cases/metadata/user-actions.svg" alt="user-actions" /></p>
+
+### Info
+
+<p style="text-align: center"><img src="assets/use-cases/metadata/user-info.svg" alt="user-info" /></p>
 
 ### Worker uploads
 
@@ -64,7 +67,6 @@ This document describes the functionalities of the entire application.
 ### Filesystem
 
 <p style="text-align: center"><img src="assets/use-cases/worker/user-filesystem.svg" alt="user-filesystem" /></p>
-
 
 ### Gateway
 
